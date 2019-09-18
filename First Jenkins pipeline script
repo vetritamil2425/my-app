@@ -1,0 +1,28 @@
+node{
+    stage('scm checkout')
+    {
+        git 'https://github.com/javahometech/my-app'
+    }
+    stage('mvn package'){
+        def mvnHome = tool name: 'maven-3', type: 'maven'
+        def mvnCMD = "${mvnHome}/bin/mvn"
+    sh "${mvnCMD} clean package"
+}
+    stage('build docker img')
+    { sh 'sudo docker build -t vetritamil2425/dockerapp .'}
+    
+    stage ('push docker img'){
+        sh 'sudo docker login -u vetritamil2425 -p Vetri@1995'
+        sh 'sudo docker push vetritamil2425/dockerapp'
+    }
+    stage('run container on dev')
+    {
+ def dockerRun = 'docker run -p 8080:8080 -d --name app vetritamil2425/dockerapp'
+    
+    sshagent(['ansadmin']) {
+    su - ansadmin 
+    sh "ssh -o StrictHostKeyChecking=no ansadmin@172.31.33.165 ${dockerRun}"
+    
+}
+}
+}
